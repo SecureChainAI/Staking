@@ -366,7 +366,6 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
     uint256 public totalStakeAmount;
 
     struct UserStake {
-        uint256 accountId;
         uint256 amount;
         uint256 startTimeStamp;
         uint256 endTimeStamp;
@@ -477,7 +476,6 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         uint256 totalRewards = liquidityAdded * APY / 100;
         uint256 rewardsPerSecond = totalRewards / secondInDays;
        
-        newUserStake.accountId= 0;
         newUserStake.amount =   liquidityAdded;
         newUserStake.startTimeStamp = block.timestamp;
         newUserStake.endTimeStamp = block.timestamp + secondInDays   ;
