@@ -495,6 +495,9 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
          
         UserStake storage stakedata = stakeInfo[msg.sender];
         require(stakedata.stakeClosed == false, "This stake is closed");
+        require(stakedata.amount >0, "Nothing to withdraw");
+        // check if normal withdraw possibe then ask user not to user emergency withdraw
+        require(block.timestamp <= newUser.endTimeStamp, "You can withdraw normally");
     
         // calculate penalty = amount * penalty / 100
         uint256 thePenalty = stakedata.amount * penalty / 100;
