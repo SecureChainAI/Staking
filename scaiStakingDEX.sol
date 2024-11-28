@@ -368,7 +368,6 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
     struct UserStake {
         uint256 amount;
         uint256 startTimeStamp;
-        uint256 endTimeStamp;
         uint256 lastRewardClaimTime;
         uint256 rewardsPerSecond;
         uint256 totalRewardsClaimed;
@@ -479,7 +478,6 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
        
         newUserStake.amount =   liquidityAdded;
         newUserStake.startTimeStamp = block.timestamp;
-        newUserStake.endTimeStamp = block.timestamp + secondInDays   ;
         newUserStake.lastRewardClaimTime = block.timestamp;
         newUserStake.rewardsPerSecond = rewardsPerSecond;
         newUserStake.stakeClosed = false;
@@ -497,7 +495,11 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         require(stakedata.stakeClosed == false, "This stake is closed");
         require(stakedata.amount >0, "Nothing to withdraw");
         // check if normal withdraw possibe then ask user not to user emergency withdraw
-        require(block.timestamp <= newUser.endTimeStamp, "You can withdraw normally");
+
+        //  seconds of the 3 months lock period :  90*24*60*60
+        uint256 secondInDays =    60 * 60 * 24* lockdays ;
+        uint256 stakeEndDate =  block.timestamp + secondInDays   ;
+        require(block.timestamp <= stakeEndDate, "You can withdraw normally");
     
         // calculate penalty = amount * penalty / 100
         uint256 thePenalty = stakedata.amount * penalty / 100;
@@ -524,7 +526,11 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         require(newUser.stakeClosed ==false, "This stake is closed");
         uint256 unstakeAmount = newUser.amount;
         require(unstakeAmount > 0, "You don't have any stake");
-        require(block.timestamp > newUser.endTimeStamp, "Stake is still active");
+
+        //  seconds of the 3 months lock period :  90*24*60*60
+        uint256 secondInDays =    60 * 60 * 24* lockdays ;
+        uint256 stakeEndDate =  block.timestamp + secondInDays   ;
+        require(block.timestamp > stakeEndDate, "Stake is still active");
         
         uint256 rewardsOfStake = calculateRewards(msg.sender);
         uint256 contractBalanceInLP = IERC20(pancakePair).balanceOf(address(this));
