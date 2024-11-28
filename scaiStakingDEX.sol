@@ -473,7 +473,8 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
 
         //  seconds of the 3 months lock period :  90*24*60*60
         uint256 secondInDays =    60 * 60 * 24* lockdays ;
-        uint256 totalRewards = liquidityAdded * APY / 100;
+        // calculate rewards for inputted tokenAmount.
+        uint256 totalRewards = tokenAmount * APY / 100;
         uint256 rewardsPerSecond = totalRewards / secondInDays;
        
         newUserStake.amount =   liquidityAdded;
