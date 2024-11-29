@@ -377,7 +377,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
     uint256 halvingThreshold = 100000000 * 1e18; // reference to check next half
     // stakes that the owner have    
     mapping(address => UserStake) public stakeInfo;
-     IERC20 public wSCAI; // The ERC20 token to be distributed
+    IERC20 public rewardSCAIToken; // The ERC20 token to be distributed
     IERC20 public SCAItoken; // The ERC20 token to be distributed
      /// @notice Address of the pancakeswap V2 router
     IPancakeRouter02 public pancakeswapV2Router;
@@ -401,7 +401,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
    
     //------------------ Constructor ------------------
 
-    constructor(address _router , address _token)  Ownable(msg.sender){
+    constructor(address _router , address _token, address _rewardToken)  Ownable(msg.sender){
 
         SCAItoken = IERC20(_token);
 
@@ -412,7 +412,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
             pancakeswapV2Router.WETH()
         );
 
-        wSCAI = IERC20(pancakeswapV2Router.WETH());
+        rewardSCAIToken = IERC20(_rewardToken);
     }
 
 
@@ -424,12 +424,12 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
     }
 
     function getRewardFund() external onlyOwner {
-        rewardFund = rewardFund + IERC20(wSCAI).balanceOf(address(this));
+        rewardFund = rewardFund + IERC20(rewardSCAIToken).balanceOf(address(this));
     }
 
     function rescueTokens() external onlyOwner {
-        uint256 contractBalInWSCAI = IERC20(wSCAI).balanceOf(address(this));
-        wSCAI.transfer(msg.sender,contractBalInWSCAI);
+        uint256 contractBalInrewardSCAIToken = IERC20(rewardSCAIToken).balanceOf(address(this));
+        rewardSCAIToken.transfer(msg.sender,contractBalInrewardSCAIToken);
     }
 
     function setLockingPeriodDays(uint8 _lockdays) external onlyOwner {
@@ -465,7 +465,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         if(pendingRewards >0)
         {
             // Transfer all pending rewards to user
-            wSCAI.transfer(msg.sender,pendingRewards);
+            rewardSCAIToken.transfer(msg.sender,pendingRewards);
             newUserStake.totalRewardsClaimed=  newUserStake.totalRewardsClaimed + pendingRewards;
             pendingRewards=0;
         }
@@ -538,11 +538,11 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         // check contract balance in LP
         require( contractBalanceInLP >= newUser.amount , "Insufficient LP balance");
 
-        // check contract balance in wSCAI
-        require( IERC20(wSCAI).balanceOf(address(this)) >= rewardsOfStake , "Insufficient contract wSCAI balance");
+        // check contract balance in rewardSCAIToken
+        require( IERC20(rewardSCAIToken).balanceOf(address(this)) >= rewardsOfStake , "Insufficient contract rewardSCAIToken balance");
         
         // transfer rewards
-         wSCAI.transfer(msg.sender,rewardsOfStake);
+         rewardSCAIToken.transfer(msg.sender,rewardsOfStake);
         // transfer the lptokens from the liquidity
         IERC20(pancakePair).transfer(staker, unstakeAmount );
 
@@ -573,11 +573,11 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
 
         uint256 rewardsAmount = calculateRewards(msg.sender);
         require(rewardsAmount > 0, "No rewards to claim");
-        // check contract balance in wSCAI
-        require( IERC20(wSCAI).balanceOf(address(this)) >= rewardsAmount , "Insufficient contract balance");
+        // check contract balance in rewardSCAIToken
+        require( IERC20(rewardSCAIToken).balanceOf(address(this)) >= rewardsAmount , "Insufficient contract balance");
 
         // transfer rewards to user
-        wSCAI.transfer(msg.sender,rewardsAmount);
+        rewardSCAIToken.transfer(msg.sender,rewardsAmount);
         newUser.totalRewardsClaimed=  newUser.totalRewardsClaimed + rewardsAmount;
         newUser.lastRewardClaimTime = block.timestamp;
         // decrease reward fund
