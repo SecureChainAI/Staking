@@ -476,7 +476,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         uint256 totalRewards = tokenAmount * APY / 100;
         uint256 rewardsPerSecond = totalRewards / secondInDays;
        
-        newUserStake.amount = newUserStake.amount +  liquidityAdded;
+        newUserStake.amount =  liquidityAdded;
         newUserStake.startTimeStamp = block.timestamp;
         newUserStake.lastRewardClaimTime = block.timestamp;
         newUserStake.rewardsPerSecond = rewardsPerSecond;
