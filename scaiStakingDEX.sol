@@ -412,12 +412,22 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
 
     //============= Setter Functions ====================
 
+    function setAPY(uint8 _apy) external onlyOwner {
+        require(_apy<=25, "APY must be less than 25%");
+        APY = _apy;
+    }
+
     function setPenalty(uint8 _penalty) external onlyOwner {
         require(_penalty<=100, "Penalty must be less than 100");
         penalty = _penalty;
     }
 
+    function setHalvingThreshold(uint8 _halvingThreshold) external onlyOwner {
+        halvingThreshold = _halvingThreshold;
+    }
+
     function getRewardFund() external onlyOwner {
+        // while setting rewardFund ,  put validation to check rewardfund should be >  halvingThreshold
         rewardFund = rewardFund + IERC20(rewardSCAIToken).balanceOf(address(this));
     }
 
@@ -537,7 +547,22 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         // transfer rewards
          rewardSCAIToken.transfer(msg.sender,rewardsOfStake);
         // transfer the lptokens from the liquidity
-        IERC20(pancakePair).transfer(staker, unstakeAmount );
+        //IERC20(pancakePair).transfer(staker, unstakeAmount );
+
+        uint256 liquidityAdded = IERC20(pancakePair).balanceOf(address(this));
+
+        // Approve the router to spend the LP tokens
+        IERC20(pancakePair).approve(address(pancakeswapV2Router), liquidityAdded );
+
+         // Remove liquidity
+        (uint256 amountToken, uint256 amountETH) = pancakeswapV2Router.removeLiquidityETH(
+             address(SCAItoken),
+            liquidityAdded,
+            0,
+            0,
+            msg.sender, // Tokens and ETH are sent to this contract first
+            block.timestamp + 500
+        );
 
         newUser.stakeClosed = true;
         newUser.totalRewardsClaimed=  newUser.totalRewardsClaimed + rewardsOfStake;
@@ -562,6 +587,8 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
             halvingThreshold =  halvingThreshold /2;
             APY = APY/ 2;
         }
+
+        require( APY >0 , "APY can not be zero");
 
         uint256 rewardsAmount = calculateRewards(msg.sender);
         require(rewardsAmount > 0, "No rewards to claim");
