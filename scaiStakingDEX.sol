@@ -478,9 +478,6 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         newUserStake.rewardsPerSecond = rewardsPerSecond;
         newUserStake.stakeClosed = false;
 
-        totalStakers += 1;
-        totalStakeAmount += amount;
-
         emit StakeCreated(msg.sender, amount);
     }
 
@@ -532,7 +529,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         uint256 contractBalanceInLP = IERC20(pancakePair).balanceOf(address(this));
 
         // check contract balance in LP
-        require( contractBalanceInLP >= newUser.LPamount , "Insufficient LP balance");
+        require( contractBalanceInLP >= unstakeAmount, "Insufficient LP balance");
 
         // check contract balance in rewardSCAIToken
         require( IERC20(rewardSCAIToken).balanceOf(address(this)) >= rewardsOfStake , "Insufficient contract rewardSCAIToken balance");
@@ -548,8 +545,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         rewardsOfStake=0;
   
         newUser.LPamount = newUser.LPamount - (unstakeAmount);
-        totalStakeAmount = totalStakeAmount - (unstakeAmount);
-        
+         
         emit Withdraw(staker,  unstakeAmount + rewardsOfStake, block.timestamp);
         return true;
     }
