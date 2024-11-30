@@ -356,23 +356,17 @@ interface IPancakeRouter02 is IPancakeRouter01 {
  */
 contract scaiStakingDEX is Ownable, ReentrancyGuard {
 
-    uint256 public minimumValidatorStaking =100000000 ; //1000000 * 1e18;
-    uint256 public rewardFund;
-    uint256 public lastReferenceValueRF = 100000000 * 1e18; // reference to check next half
-    mapping(address=>uint256) public rewardBalance;
-    mapping(address=>uint256) public totalProfitWithdrawn;
-    
-    uint256 public totalStakers;
-    uint256 public totalStakeAmount;
-
     struct UserStake {
-        uint256 amount;
+        uint256 stakedAmount;
+        uint256 LPamount;
         uint256 startTimeStamp;
         uint256 lastRewardClaimTime;
         uint256 rewardsPerSecond;
         uint256 totalRewardsClaimed;
         bool stakeClosed;
     }
+
+    uint256 public rewardFund;
  
     uint256 halvingThreshold = 100000000 * 1e18; // reference to check next half
     // stakes that the owner have    
@@ -460,6 +454,8 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
 
         UserStake storage newUserStake = stakeInfo[msg.sender];
 
+        newUserStake.stakedAmount = newUserStake.stakedAmount + tokenAmount;
+
         // check for pending rewards, when user restakes we will first transfer all user's pending rewards to user
         uint256 pendingRewards =  calculateRewards(msg.sender);
         if(pendingRewards >0)
@@ -473,10 +469,10 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         //  seconds of the 3 months lock period :  90*24*60*60
         uint256 secondInDays =    60 * 60 * 24* lockdays ;
         // calculate rewards for inputted tokenAmount.
-        uint256 totalRewards = tokenAmount * APY / 100;
+        uint256 totalRewards = newUserStake.stakedAmount * APY / 100;
         uint256 rewardsPerSecond = totalRewards / secondInDays;
        
-        newUserStake.amount =  liquidityAdded;
+        newUserStake.LPamount =  liquidityAdded;
         newUserStake.startTimeStamp = block.timestamp;
         newUserStake.lastRewardClaimTime = block.timestamp;
         newUserStake.rewardsPerSecond = rewardsPerSecond;
@@ -493,7 +489,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
          
         UserStake storage stakedata = stakeInfo[msg.sender];
         require(stakedata.stakeClosed == false, "This stake is closed");
-        require(stakedata.amount >0, "Nothing to withdraw");
+        require(stakedata.LPamount >0, "Nothing to withdraw");
         // check if normal withdraw possibe then ask user not to user emergency withdraw
 
         //  seconds of the 3 months lock period :  90*24*60*60
@@ -502,14 +498,14 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         require(block.timestamp <= stakeEndDate, "You can withdraw normally");
     
         // calculate penalty = amount * penalty / 100
-        uint256 thePenalty = stakedata.amount * penalty / 100;
+        uint256 thePenalty = stakedata.LPamount * penalty / 100;
          
         // remaining amount= amount - penaty
-        uint256 amountToWithdraw = stakedata.amount - thePenalty;
+        uint256 amountToWithdraw = stakedata.LPamount - thePenalty;
 
         // store the results in the stakes array of the user
         stakedata.stakeClosed = true;
-        stakedata.amount=0;
+        stakedata.LPamount=0;
         // transfer remaining
         IERC20(pancakePair).transfer(msg.sender, amountToWithdraw);
 
@@ -524,7 +520,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         address staker = msg.sender;
         UserStake storage newUser = stakeInfo[staker];
         require(newUser.stakeClosed ==false, "This stake is closed");
-        uint256 unstakeAmount = newUser.amount;
+        uint256 unstakeAmount = newUser.LPamount;
         require(unstakeAmount > 0, "You don't have any stake");
 
         //  seconds of the 3 months lock period :  90*24*60*60
@@ -536,7 +532,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         uint256 contractBalanceInLP = IERC20(pancakePair).balanceOf(address(this));
 
         // check contract balance in LP
-        require( contractBalanceInLP >= newUser.amount , "Insufficient LP balance");
+        require( contractBalanceInLP >= newUser.LPamount , "Insufficient LP balance");
 
         // check contract balance in rewardSCAIToken
         require( IERC20(rewardSCAIToken).balanceOf(address(this)) >= rewardsOfStake , "Insufficient contract rewardSCAIToken balance");
@@ -551,7 +547,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         newUser.lastRewardClaimTime = block.timestamp;
         rewardsOfStake=0;
   
-        newUser.amount = newUser.amount - (unstakeAmount);
+        newUser.LPamount = newUser.LPamount - (unstakeAmount);
         totalStakeAmount = totalStakeAmount - (unstakeAmount);
         
         emit Withdraw(staker,  unstakeAmount + rewardsOfStake, block.timestamp);
@@ -591,7 +587,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
     {
         UserStake storage stakedata = stakeInfo[_user];
         uint256 pendingRewardsAmount =0;
-        if(stakedata.amount > 0)
+        if(stakedata.LPamount > 0)
         {
             uint256 timeElapsed = block.timestamp - stakedata.lastRewardClaimTime;
             pendingRewardsAmount = stakedata.rewardsPerSecond * timeElapsed;
@@ -599,4 +595,3 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         return pendingRewardsAmount;
     }
 }
-
