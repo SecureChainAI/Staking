@@ -400,12 +400,19 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         SCAItoken = IERC20(_token);
 
         pancakeswapV2Router = IPancakeRouter02(_router);
-        // Creating a new pancakeswap pair for this new token
-        pancakePair = IPancakeFactory(pancakeswapV2Router.factory()).createPair(
-            address( SCAItoken),
+        
+        pancakePair = IPancakeFactory(pancakeswapV2Router.factory()).getPair(
+             address( SCAItoken),
             pancakeswapV2Router.WETH()
         );
-
+        if(pancakePair == address(0))
+        {
+                 // Creating a new pancakeswap pair for this new token
+             pancakePair = IPancakeFactory(pancakeswapV2Router.factory()).createPair(
+                 address( SCAItoken),
+                pancakeswapV2Router.WETH()
+        );
+        }
         rewardSCAIToken = IERC20(_rewardToken);
     }
 
@@ -452,6 +459,8 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         // Approve token transfer to Uniswap Router
         IERC20(SCAItoken).approve(address(pancakeswapV2Router), tokenAmount);
 
+        IERC20(SCAItoken).transferFrom( msg.sender , address(this), tokenAmount);
+
         // addLiquidity with native coins and SCAI tokens
         (, , uint256 liquidityAdded) = pancakeswapV2Router.addLiquidityETH{value: amount}(
             address(SCAItoken),
@@ -459,7 +468,7 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
             0, // slippage is unavoidable
             0, // slippage is unavoidable
             address(this),
-            block.timestamp + 600000
+            block.timestamp + 600
         );
 
         UserStake storage newUserStake = stakeInfo[msg.sender];
@@ -549,19 +558,17 @@ contract scaiStakingDEX is Ownable, ReentrancyGuard {
         // transfer the lptokens from the liquidity
         //IERC20(pancakePair).transfer(staker, unstakeAmount );
 
-        uint256 liquidityAdded = IERC20(pancakePair).balanceOf(address(this));
-
         // Approve the router to spend the LP tokens
-        IERC20(pancakePair).approve(address(pancakeswapV2Router), liquidityAdded );
+        IERC20(pancakePair).approve(address(pancakeswapV2Router), unstakeAmount );
 
          // Remove liquidity
-        (uint256 amountToken, uint256 amountETH) = pancakeswapV2Router.removeLiquidityETH(
+        pancakeswapV2Router.removeLiquidityETH(
              address(SCAItoken),
-            liquidityAdded,
-            0,
-            0,
-            msg.sender, // Tokens and ETH are sent to this contract first
-            block.timestamp + 500
+            unstakeAmount,
+            0, // slippage is unavoidable
+            0, // slippage is unavoidable
+            msg.sender,
+            block.timestamp
         );
 
         newUser.stakeClosed = true;
