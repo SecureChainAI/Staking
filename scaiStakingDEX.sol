@@ -1,627 +1,179 @@
-// Sources flattened with hardhat v2.9.1 https://hardhat.org
-
-// File @openzeppelin/contracts/utils/Context.sol@v4.5.0
-
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
-
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-interface IPancakeFactory {
-    event PairCreated(
-        address indexed token0,
-        address indexed token1,
-        address pair,
-        uint256
-    );
-
-    function feeTo() external view returns (address);
-
-    function feeToSetter() external view returns (address);
-
-    function getPair(
-        address tokenA,
-        address tokenB
-    ) external view returns (address pair);
-
-    function allPairs(uint256) external view returns (address pair);
-
-    function allPairsLength() external view returns (uint256);
-
-    function createPair(
-        address tokenA,
-        address tokenB
-    ) external returns (address pair);
-
-    function setFeeTo(address) external;
-
-    function setFeeToSetter(address) external;
-
-    function INIT_CODE_PAIR_HASH() external view returns (bytes32);
-}
-
-
-interface IPancakePair {
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    function name() external pure returns (string memory);
-
-    function symbol() external pure returns (string memory);
-
-    function decimals() external pure returns (uint8);
-
-    function totalSupply() external view returns (uint256);
-
-    function balanceOf(address owner) external view returns (uint256);
-
-    function allowance(
-        address owner,
-        address spender
-    ) external view returns (uint256);
-
-    function approve(address spender, uint256 value) external returns (bool);
-
-    function transfer(address to, uint256 value) external returns (bool);
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) external returns (bool);
-
-    function DOMAIN_SEPARATOR() external view returns (bytes32);
-
-    function PERMIT_TYPEHASH() external pure returns (bytes32);
-
-    function nonces(address owner) external view returns (uint256);
-
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
-
-    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
-    event Burn(
-        address indexed sender,
-        uint256 amount0,
-        uint256 amount1,
-        address indexed to
-    );
-    event Swap(
-        address indexed sender,
-        uint256 amount0In,
-        uint256 amount1In,
-        uint256 amount0Out,
-        uint256 amount1Out,
-        address indexed to
-    );
-    event Sync(uint112 reserve0, uint112 reserve1);
-
-    function MINIMUM_LIQUIDITY() external pure returns (uint256);
-
-    function factory() external view returns (address);
-
-    function token0() external view returns (address);
-
-    function token1() external view returns (address);
-
-    function getReserves()
-        external
-        view
-        returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
-
-    function price0CumulativeLast() external view returns (uint256);
-
-    function price1CumulativeLast() external view returns (uint256);
-
-    function kLast() external view returns (uint256);
-
-    function mint(address to) external returns (uint256 liquidity);
-
-    function burn(
-        address to
-    ) external returns (uint256 amount0, uint256 amount1);
-
-    function swap(
-        uint256 amount0Out,
-        uint256 amount1Out,
-        address to,
-        bytes calldata data
-    ) external;
-
-    function skim(address to) external;
-
-    function sync() external;
-
-    function initialize(address, address) external;
-}
-
-
-interface IPancakeRouter01 {
-    function factory() external pure returns (address);
-
-    function WETH() external pure returns (address);
-
-    function addLiquidity(
-        address tokenA,
-        address tokenB,
-        uint256 amountADesired,
-        uint256 amountBDesired,
-        uint256 amountAMin,
-        uint256 amountBMin,
-        address to,
-        uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
-
+interface IUniswapV2Router {
     function addLiquidityETH(
         address token,
-        uint256 amountTokenDesired,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint amountTokenDesired,
+        uint amountTokenMin,
+        uint amountETHMin,
         address to,
-        uint256 deadline
-    )
-        external
-        payable
-        returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
-
-    function removeLiquidity(
-        address tokenA,
-        address tokenB,
-        uint256 liquidity,
-        uint256 amountAMin,
-        uint256 amountBMin,
-        address to,
-        uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB);
+        uint deadline
+    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
 
     function removeLiquidityETH(
         address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
         address to,
-        uint256 deadline
-    ) external returns (uint256 amountToken, uint256 amountETH);
-
-    function removeLiquidityWithPermit(
-        address tokenA,
-        address tokenB,
-        uint256 liquidity,
-        uint256 amountAMin,
-        uint256 amountBMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256 amountA, uint256 amountB);
-
-    function removeLiquidityETHWithPermit(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256 amountToken, uint256 amountETH);
-
-    function swapExactTokensForTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapTokensForExactTokens(
-        uint256 amountOut,
-        uint256 amountInMax,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapExactETHForTokens(
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
-
-    function swapTokensForExactETH(
-        uint256 amountOut,
-        uint256 amountInMax,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapExactTokensForETH(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapETHForExactTokens(
-        uint256 amountOut,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
-
-    function quote(
-        uint256 amountA,
-        uint256 reserveA,
-        uint256 reserveB
-    ) external pure returns (uint256 amountB);
-
-    function getAmountOut(
-        uint256 amountIn,
-        uint256 reserveIn,
-        uint256 reserveOut
-    ) external pure returns (uint256 amountOut);
-
-    function getAmountIn(
-        uint256 amountOut,
-        uint256 reserveIn,
-        uint256 reserveOut
-    ) external pure returns (uint256 amountIn);
-
-    function getAmountsOut(
-        uint256 amountIn,
-        address[] calldata path
-    ) external view returns (uint256[] memory amounts);
-
-    function getAmountsIn(
-        uint256 amountOut,
-        address[] calldata path
-    ) external view returns (uint256[] memory amounts);
+        uint deadline
+    ) external returns (uint amountToken, uint amountETH);
 }
 
-
-interface IPancakeRouter02 is IPancakeRouter01 {
-    function removeLiquidityETHSupportingFeeOnTransferTokens(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
-        address to,
-        uint256 deadline
-    ) external returns (uint256 amountETH);
-
-    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256 amountETH);
-
-    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external;
-
-    function swapExactETHForTokensSupportingFeeOnTransferTokens(
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external payable;
-
-    function swapExactTokensForETHSupportingFeeOnTransferTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external;
-}
-
-
-/**
- * @dev Staking Contract 
- *   - Stake LP Token for X number of days  
- *   - Add penelty function also 
- */
-contract scaiStakingDEX is Ownable, ReentrancyGuard {
-
-    struct UserStake {
-        uint256 stakedAmount;
-        uint256 LPamount;
-        uint256 startTimeStamp;
-        uint256 lastRewardClaimTime;
-        uint256 rewardsPerSecond;
-        uint256 totalRewardsClaimed;
-        bool stakeClosed;
+contract SCAIStaking is ReentrancyGuard {
+    struct Stake {
+        uint256 scaiAmount;
+        uint256 ethAmount;
+        uint256 lpTokens;
+        uint256 startTime;
+        uint256 lastRewardTime;
+        uint256 unlockTime;
     }
 
-    uint256 public rewardFund;
- 
-    uint256 halvingThreshold = 100000000 * 1e18; // reference to check next half
-    // stakes that the owner have    
-    mapping(address => UserStake) public stakeInfo;
-    IERC20 public rewardSCAIToken; // The ERC20 token to be distributed
-    IERC20 public SCAItoken; // The ERC20 token to be distributed
-     /// @notice Address of the pancakeswap V2 router
-    IPancakeRouter02 public pancakeswapV2Router;
-    /// @notice Address of the pancakeswap pair
-    address public pancakePair;
-    uint256 public APY = 20; // Reward rate
-    uint256 public lockdays = 90 ;
-     // the penalty, a number between 0 and 100
-    uint8 public penalty = 10;
+    IERC20 public scaiToken;
+    IUniswapV2Router public uniswapRouter;
+    address public rewardPool;
+    uint256 public totalRewardPool;
+    uint256 public remainingRewards;
+    uint256 public apy = 20; // Initial APY: 20%
+    uint256 public constant APY_DIVISOR = 100; // For calculating APY
+    uint256 public constant PENALTY_PERCENT = 10; // Penalty for premature unstaking
+    uint256 public constant LOCK_PERIOD = 90 days;
 
-    //events
-    event Withdraw(address user,  uint256 amount, uint256 timestamp);
-    event EmergencyWithdraw(address user,  uint256 amount, uint256 timestamp);
-    event StakeCreated(address user, uint256 amount);
-    event ClaimRewards(address user,  uint256 amount, uint256 timestamp);
+    mapping(address => Stake) public stakes;
 
+    event Staked(address indexed user, uint256 scaiAmount, uint256 ethAmount, uint256 lpTokens);
+    event Unstaked(address indexed user, uint256 scaiAmount, uint256 ethAmount, uint256 lpTokens, bool premature);
+    event RewardsDistributed(address indexed user, uint256 amount);
+    event Halving(uint256 newAPY);
+    event RewardsWithdrawn(address indexed user, uint256 amount);
 
-    receive() external payable {}
-    fallback() external payable {}
- 
-   
-    //------------------ Constructor ------------------
-
-    constructor(address _router , address _token, address _rewardToken)  Ownable(msg.sender){
-
-        SCAItoken = IERC20(_token);
-
-        pancakeswapV2Router = IPancakeRouter02(_router);
-        
-        pancakePair = IPancakeFactory(pancakeswapV2Router.factory()).getPair(
-             address( SCAItoken),
-            pancakeswapV2Router.WETH()
-        );
-        if(pancakePair == address(0))
-        {
-                 // Creating a new pancakeswap pair for this new token
-             pancakePair = IPancakeFactory(pancakeswapV2Router.factory()).createPair(
-                 address( SCAItoken),
-                pancakeswapV2Router.WETH()
-        );
-        }
-        rewardSCAIToken = IERC20(_rewardToken);
+    constructor(
+        address _scaiToken,
+        address _uniswapRouter,
+        address _rewardPool,
+        uint256 _initialRewardPool
+    ) {
+        scaiToken = IERC20(_scaiToken);
+        uniswapRouter = IUniswapV2Router(_uniswapRouter);
+        rewardPool = _rewardPool;
+        totalRewardPool = _initialRewardPool;
+        remainingRewards = _initialRewardPool;
     }
 
-
-    //============= Setter Functions ====================
-
-    function setAPY(uint8 _apy) external onlyOwner {
-        require(_apy<=25, "APY must be less than 25%");
-        APY = _apy;
+    modifier hasStake(address user) {
+        require(stakes[user].lpTokens > 0, "No active stake");
+        _;
     }
 
-    function setPenalty(uint8 _penalty) external onlyOwner {
-        require(_penalty<=100, "Penalty must be less than 100");
-        penalty = _penalty;
-    }
+    function stake(uint256 scaiAmount) external payable nonReentrant {
+        require(scaiAmount > 0, "SCAI amount must be greater than zero");
+        require(msg.value > 0, "ETH amount must be greater than zero");
 
-    function setHalvingThreshold(uint8 _halvingThreshold) external onlyOwner {
-        halvingThreshold = _halvingThreshold;
-    }
+        scaiToken.transferFrom(msg.sender, address(this), scaiAmount);
+        scaiToken.approve(address(uniswapRouter), scaiAmount);
 
-    function getRewardFund() external onlyOwner {
-        // while setting rewardFund ,  put validation to check rewardfund should be >  halvingThreshold
-        rewardFund = rewardFund + IERC20(rewardSCAIToken).balanceOf(address(this));
-    }
-
-    function rescueTokens() external onlyOwner {
-        uint256 contractBalInrewardSCAIToken = IERC20(rewardSCAIToken).balanceOf(address(this));
-        rewardSCAIToken.transfer(msg.sender,contractBalInrewardSCAIToken);
-    }
-
-    function setLockingPeriodDays(uint8 _lockdays) external onlyOwner {
-        lockdays = _lockdays;
-    }
-
-    //============= External Functions ====================
-
-    /// @notice  auto addLiquidity to router , get lptokens and stake them
-
-    function stake(uint256 tokenAmount) external payable nonReentrant   
-    {   
-        uint256 amount = msg.value;
-        require(amount >0, "Invalid amount");
-       
-        // Approve token transfer to Uniswap Router
-        IERC20(SCAItoken).approve(address(pancakeswapV2Router), tokenAmount);
-
-        IERC20(SCAItoken).transferFrom( msg.sender , address(this), tokenAmount);
-
-        // addLiquidity with native coins and SCAI tokens
-        (, , uint256 liquidityAdded) = pancakeswapV2Router.addLiquidityETH{value: amount}(
-            address(SCAItoken),
-            tokenAmount,
-            0, // slippage is unavoidable
-            0, // slippage is unavoidable
+        // Add liquidity to Uniswap
+        (uint256 tokenAmount, uint256 ethAmount, uint256 liquidity) = uniswapRouter.addLiquidityETH{
+            value: msg.value
+        }(
+            address(scaiToken),
+            scaiAmount,
+            0,
+            0,
             address(this),
-            block.timestamp + 600
+            block.timestamp + 1 hours
         );
 
-        UserStake storage newUserStake = stakeInfo[msg.sender];
+        // Save stake details
+        Stake storage userStake = stakes[msg.sender];
+        if (userStake.lpTokens > 0) {
+            // Distribute previous rewards before restaking
+            _distributeRewards(msg.sender);
+        }
+        userStake.scaiAmount += tokenAmount;
+        userStake.ethAmount += ethAmount;
+        userStake.lpTokens += liquidity;
+        userStake.startTime = block.timestamp;
+        userStake.lastRewardTime = block.timestamp;
+        userStake.unlockTime = block.timestamp + LOCK_PERIOD;
 
-        newUserStake.stakedAmount = newUserStake.stakedAmount + tokenAmount;
+        emit Staked(msg.sender, tokenAmount, ethAmount, liquidity);
+    }
 
-        // check for pending rewards, when user restakes we will first transfer all user's pending rewards to user
-        uint256 pendingRewards =  calculateRewards(msg.sender);
-        if(pendingRewards >0)
-        {
-            // Transfer all pending rewards to user
-            rewardSCAIToken.transfer(msg.sender,pendingRewards);
-            newUserStake.totalRewardsClaimed=  newUserStake.totalRewardsClaimed + pendingRewards;
-            pendingRewards=0;
+    function withdrawRewards() external nonReentrant hasStake(msg.sender) {
+        _distributeRewards(msg.sender);
+    }
+
+    function _distributeRewards(address user) internal {
+        Stake storage userStake = stakes[user];
+        uint256 stakedDuration = block.timestamp - userStake.lastRewardTime;
+        uint256 reward = (userStake.scaiAmount * apy * stakedDuration) /
+            (APY_DIVISOR * 365 days);
+
+        require(reward > 0, "No rewards available to withdraw");
+        require(reward <= remainingRewards, "Insufficient rewards in pool");
+
+        remainingRewards -= reward;
+        userStake.lastRewardTime = block.timestamp;
+
+        scaiToken.transferFrom(rewardPool, user, reward);
+
+        // Halving mechanism
+        if (remainingRewards <= totalRewardPool / 2 && apy > 1) {
+            apy /= 2;
+            emit Halving(apy);
         }
 
-        //  seconds of the 3 months lock period :  90*24*60*60
-        uint256 secondInDays =    60 * 60 * 24* lockdays ;
-        // calculate rewards for inputted tokenAmount.
-        uint256 totalRewards = newUserStake.stakedAmount * APY / 100;
-        uint256 rewardsPerSecond = totalRewards / secondInDays;
-       
-        newUserStake.LPamount =  liquidityAdded;
-        newUserStake.startTimeStamp = block.timestamp;
-        newUserStake.lastRewardClaimTime = block.timestamp;
-        newUserStake.rewardsPerSecond = rewardsPerSecond;
-        newUserStake.stakeClosed = false;
-
-        emit StakeCreated(msg.sender, amount);
+        emit RewardsWithdrawn(user, reward);
     }
 
+    function unstake(bool premature) external nonReentrant hasStake(msg.sender) {
+        Stake storage userStake = stakes[msg.sender];
+        require(
+            premature || block.timestamp >= userStake.unlockTime,
+            "Cannot unstake before unlock time"
+        );
 
-    function emergencyWithdrawStake()  external nonReentrant {
-         
-        UserStake storage stakedata = stakeInfo[msg.sender];
-        require(stakedata.stakeClosed == false, "This stake is closed");
-        require(stakedata.LPamount >0, "Nothing to withdraw");
-        // check if normal withdraw possibe then ask user not to user emergency withdraw
+        uint256 penalty = 0;
+        if (premature) {
+            penalty = (userStake.lpTokens * PENALTY_PERCENT) / 100;
+        }
 
-        //  seconds of the 3 months lock period :  90*24*60*60
-        uint256 secondInDays =    60 * 60 * 24* lockdays ;
-        uint256 stakeEndDate =  block.timestamp + secondInDays   ;
-        require(block.timestamp <= stakeEndDate, "You can withdraw normally");
-    
-        // calculate penalty = amount * penalty / 100
-        uint256 thePenalty = stakedata.LPamount * penalty / 100;
-         
-        // remaining amount= amount - penaty
-        uint256 amountToWithdraw = stakedata.LPamount - thePenalty;
+        uint256 lpTokensToRemove = userStake.lpTokens - penalty;
 
-        // store the results in the stakes array of the user
-        stakedata.stakeClosed = true;
-        stakedata.LPamount=0;
-        // transfer remaining
-        IERC20(pancakePair).transfer(msg.sender, amountToWithdraw);
-
-        //Burn the penalty tokens 
-        IERC20(pancakePair).transfer(address(0), thePenalty); 
-       
-        emit EmergencyWithdraw(msg.sender, amountToWithdraw, block.timestamp);
-    }
-
-    function WithdrawStake() external nonReentrant returns (bool)
-    {
-        address staker = msg.sender;
-        UserStake storage newUser = stakeInfo[staker];
-        require(newUser.stakeClosed ==false, "This stake is closed");
-        uint256 unstakeAmount = newUser.LPamount;
-        require(unstakeAmount > 0, "You don't have any stake");
-
-        //  seconds of the 3 months lock period :  90*24*60*60
-        uint256 secondInDays =    60 * 60 * 24* lockdays ;
-        uint256 stakeEndDate =  block.timestamp + secondInDays   ;
-        require(block.timestamp > stakeEndDate, "Stake is still active");
-        
-        uint256 rewardsOfStake = calculateRewards(msg.sender);
-        uint256 contractBalanceInLP = IERC20(pancakePair).balanceOf(address(this));
-
-        // check contract balance in LP
-        require( contractBalanceInLP >= unstakeAmount, "Insufficient LP balance");
-
-        // check contract balance in rewardSCAIToken
-        require( IERC20(rewardSCAIToken).balanceOf(address(this)) >= rewardsOfStake , "Insufficient contract rewardSCAIToken balance");
-        
-        // transfer rewards
-         rewardSCAIToken.transfer(msg.sender,rewardsOfStake);
-        // transfer the lptokens from the liquidity
-        //IERC20(pancakePair).transfer(staker, unstakeAmount );
-
-        // Approve the router to spend the LP tokens
-        IERC20(pancakePair).approve(address(pancakeswapV2Router), unstakeAmount );
-
-         // Remove liquidity
-        pancakeswapV2Router.removeLiquidityETH(
-             address(SCAItoken),
-            unstakeAmount,
-            0, // slippage is unavoidable
-            0, // slippage is unavoidable
+        // Remove liquidity from Uniswap
+        (uint256 tokenAmount, uint256 ethAmount) = uniswapRouter.removeLiquidityETH(
+            address(scaiToken),
+            lpTokensToRemove,
+            0,
+            0,
             msg.sender,
-            block.timestamp
+            block.timestamp + 1 hours
         );
 
-        newUser.stakeClosed = true;
-        newUser.totalRewardsClaimed=  newUser.totalRewardsClaimed + rewardsOfStake;
-        newUser.lastRewardClaimTime = block.timestamp;
-        rewardsOfStake=0;
-  
-        newUser.LPamount = newUser.LPamount - (unstakeAmount);
-         
-        emit Withdraw(staker,  unstakeAmount + rewardsOfStake, block.timestamp);
-        return true;
+        // Distribute pending rewards
+        _distributeRewards(msg.sender);
+
+        // Reset stake details
+        delete stakes[msg.sender];
+
+        emit Unstaked(msg.sender, tokenAmount, ethAmount, lpTokensToRemove, premature);
     }
 
-
-    function WithdrawRewards() external  nonReentrant
-    {
-        UserStake storage newUser = stakeInfo[msg.sender];
-        require(newUser.stakeClosed ==false, "This stake is closed");
-        require( rewardFund >0 , "Insufficient reward fund");
-
-        if(rewardFund <= halvingThreshold /2) 
-        {   
-            halvingThreshold =  halvingThreshold /2;
-            APY = APY/ 2;
-        }
-
-        require( APY >0 , "APY can not be zero");
-
-        uint256 rewardsAmount = calculateRewards(msg.sender);
-        require(rewardsAmount > 0, "No rewards to claim");
-        // check contract balance in rewardSCAIToken
-        require( IERC20(rewardSCAIToken).balanceOf(address(this)) >= rewardsAmount , "Insufficient contract balance");
-
-        // transfer rewards to user
-        rewardSCAIToken.transfer(msg.sender,rewardsAmount);
-        newUser.totalRewardsClaimed=  newUser.totalRewardsClaimed + rewardsAmount;
-        newUser.lastRewardClaimTime = block.timestamp;
-        // decrease reward fund
-        rewardFund = rewardFund - rewardsAmount;
-        rewardsAmount=0;
-
-        emit  ClaimRewards( msg.sender,   rewardsAmount,   block.timestamp);
+    function viewUnlockTime(address user) external view returns (uint256) {
+        return stakes[user].unlockTime;
     }
 
-    function calculateRewards(address _user)  public  view returns(uint256)
-    {
-        UserStake storage stakedata = stakeInfo[_user];
-        uint256 pendingRewardsAmount =0;
-        if(stakedata.LPamount > 0)
-        {
-            uint256 timeElapsed = block.timestamp - stakedata.lastRewardClaimTime;
-            pendingRewardsAmount = stakedata.rewardsPerSecond * timeElapsed;
-        }
-        return pendingRewardsAmount;
+    function viewCurrentRewards(address user) external view returns (uint256) {
+        Stake memory userStake = stakes[user];
+        uint256 stakedDuration = block.timestamp - userStake.lastRewardTime;
+        uint256 reward = (userStake.scaiAmount * apy * stakedDuration) /
+            (APY_DIVISOR * 365 days);
+        return reward;
     }
 }
