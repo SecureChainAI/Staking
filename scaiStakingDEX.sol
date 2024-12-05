@@ -335,7 +335,7 @@ contract SCAIStaking is ReentrancyGuard {
     uint256 public apy = 20;                      // Annual Percentage Yield (APY)
     uint256 public constant APY_DIVISOR = 100;    // Divisor for APY calculations
     uint256 public constant PENALTY_PERCENT = 10; // Penalty for early unstaking
-    uint256 public constant LOCK_PERIOD = 10 minutes; // Lock period for unstaking
+    uint256 public constant LOCK_PERIOD = 90 days; // Lock period for unstaking
     address public uniswapPair;                   // Address of the Uniswap LP pair
 
     mapping(address => Stake) public stakes;      // Mapping of user stakes
