@@ -538,16 +538,7 @@ contract SCAIStaking is ReentrancyGuard {
 
         emit Unstaked(msg.sender, tokenAmount, ethAmount , lpTokensToRemove, premature);
     }
-
-
-     function test() public  returns(uint256){
-        // Approve Uniswap router for LP tokens
-        IERC20(uniswapPair).approve(address(uniswapRouter),  stakes[msg.sender].lpTokens);
-          // Check LP token balance
-        uint256 lpBalance = IERC20(uniswapPair).balanceOf(address(this));
-       // require(lpBalance >= stakes[msg.sender].lpTokens, "Insufficient LP tokens in contract");
-        return lpBalance;
-    }
+    
     /**
      * @dev Computes the required ETH amount for the specified SCAI amount based on the Uniswap pool reserves.
      * @param amount The amount of SCAI tokens to price.
